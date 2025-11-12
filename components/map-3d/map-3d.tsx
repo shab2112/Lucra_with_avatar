@@ -93,7 +93,8 @@ export const Map3D = forwardRef(
         heading={heading}
         tilt={tilt}
         roll={roll}
-        defaultUIHidden={true}
+        defaultLabelsDisabled={false}
+        defaultUIDisabled={false}
         mode="SATELLITE"></gmp-map-3d>
     );
   }
