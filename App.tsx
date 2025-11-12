@@ -28,7 +28,7 @@ function AppComponent() {
 
   const [geocoder, setGeocoder] = useState<google.maps.Geocoder | null>(null);
 
-  const { markers, routes, cameraTarget } = useMapStore();
+  const { markers, routes, cameraTarget, preventAutoFrame } = useMapStore();
 
   useEffect(() => {
     if (geocodingLib && !geocoder) {
@@ -88,6 +88,8 @@ function AppComponent() {
     if (!mapController || markers.length === 0) return;
 
     const flyToMarkers = async () => {
+      if (preventAutoFrame) return;
+
       const locations = markers.map(m => ({
         lat: m.position.lat,
         lng: m.position.lng,
@@ -113,7 +115,7 @@ function AppComponent() {
     mapController.clearMarkers();
     mapController.addMarkers(markers);
     flyToMarkers();
-  }, [markers, mapController, padding, elevationLib]);
+  }, [markers, mapController, padding, elevationLib, preventAutoFrame]);
 
   useEffect(() => {
     if (!mapController || !cameraTarget) return;

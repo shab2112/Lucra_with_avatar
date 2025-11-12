@@ -236,18 +236,22 @@ export interface MapMarker {
 
 export const useMapStore = create<{
   markers: MapMarker[];
+  routes: any[];
   cameraTarget: Map3DCameraProps | null;
   preventAutoFrame: boolean;
   setMarkers: (markers: MapMarker[]) => void;
   clearMarkers: () => void;
+  setRoutes: (routes: any[]) => void;
   setCameraTarget: (target: Map3DCameraProps | null) => void;
   setPreventAutoFrame: (prevent: boolean) => void;
 }>(set => ({
   markers: [],
+  routes: [],
   cameraTarget: null,
   preventAutoFrame: false,
   setMarkers: markers => set({ markers }),
   clearMarkers: () => set({ markers: [] }),
+  setRoutes: routes => set({ routes }),
   setCameraTarget: target => set({ cameraTarget: target }),
   setPreventAutoFrame: prevent => set({ preventAutoFrame: prevent }),
 }));
