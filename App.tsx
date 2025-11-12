@@ -1,122 +1,170 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { APIProvider } from '@vis.gl/react-google-maps';
+import { LiveAPIProvider } from './contexts/LiveAPIContext';
+import { Map3D } from './components/map-3d';
+import ControlTray from './components/ControlTray';
+import StreamingConsole from './components/streaming-console/StreamingConsole';
+import Sidebar from './components/Sidebar';
+import { GroundingWidget } from './components/GroundingWidget';
+import { useMapStore } from './lib/state';
+import { MapController } from './lib/map-controller';
+import { lookAtWithPadding } from './lib/look-at';
 import './index.css';
 
-function App() {
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+
+function AppComponent() {
+  const mapRef = useRef<any>(null);
+  const consolePanelRef = useRef<HTMLDivElement>(null);
+  const controlTrayRef = useRef<HTMLDivElement>(null);
+  const [mapController, setMapController] = useState<MapController | null>(null);
+  const [padding, setPadding] = useState<[number, number, number, number]>([0.05, 0.05, 0.05, 0.35]);
+
+  const { markers, routes, cameraTarget } = useMapStore();
+
+  useEffect(() => {
+    if (mapRef.current && !mapController) {
+      const controller = new MapController(mapRef.current);
+      setMapController(controller);
+    }
+  }, [mapController]);
+
+  useEffect(() => {
+    const calculatePadding = () => {
+      const consoleEl = consolePanelRef.current;
+      const trayEl = controlTrayRef.current;
+      const vh = window.innerHeight;
+      const vw = window.innerWidth;
+
+      if (!consoleEl || !trayEl) return;
+
+      const isMobile = window.matchMedia('(max-width: 768px)').matches;
+
+      const top = 0.05;
+      const right = 0.05;
+      let bottom = 0.05;
+      let left = 0.05;
+
+      if (!isMobile) {
+        left = Math.max(left, (consoleEl.offsetWidth / vw) + 0.02);
+        bottom = Math.max(bottom, (trayEl.offsetHeight / vh) + 0.02);
+      }
+
+      setPadding([top, right, bottom, left]);
+    };
+
+    const observer = new ResizeObserver(calculatePadding);
+    if (consolePanelRef.current) observer.observe(consolePanelRef.current);
+    if (controlTrayRef.current) observer.observe(controlTrayRef.current);
+    window.addEventListener('resize', calculatePadding);
+
+    calculatePadding();
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', calculatePadding);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!mapController || markers.length === 0) return;
+
+    const flyToMarkers = async () => {
+      const locations = markers.map(m => ({
+        lat: m.position.lat,
+        lng: m.position.lng,
+        alt: m.position.altitude || 0
+      }));
+
+      try {
+        const elevator = new google.maps.ElevationService();
+        const cameraProps = await lookAtWithPadding(
+          locations,
+          elevator,
+          0,
+          padding
+        );
+
+        mapController.flyTo(cameraProps);
+      } catch (error) {
+        console.error('Error flying to markers:', error);
+      }
+    };
+
+    mapController.clearMarkers();
+    mapController.addMarkers(markers);
+    flyToMarkers();
+  }, [markers, mapController, padding]);
+
+  useEffect(() => {
+    if (!mapController || !cameraTarget) return;
+    mapController.flyTo(cameraTarget);
+  }, [cameraTarget, mapController]);
+
+  useEffect(() => {
+    if (!mapController) return;
+    mapController.setRoutes(routes);
+  }, [routes, mapController]);
+
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      padding: '2rem'
-    }}>
+    <div className="app">
+      <div ref={consolePanelRef} className="console-panel">
+        <StreamingConsole />
+      </div>
+
+      <div className="map-container">
+        <Map3D ref={mapRef} />
+        <GroundingWidget />
+      </div>
+
+      <div ref={controlTrayRef} className="control-tray-container">
+        <ControlTray />
+      </div>
+
+      <Sidebar />
+    </div>
+  );
+}
+
+function App() {
+  if (!GOOGLE_MAPS_API_KEY) {
+    return (
       <div style={{
-        maxWidth: '800px',
-        width: '100%',
-        background: 'white',
-        borderRadius: '16px',
-        padding: '3rem',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        padding: '2rem'
       }}>
-        <h1 style={{
-          fontSize: '2.5rem',
-          fontWeight: '700',
-          color: '#1a202c',
-          marginBottom: '1.5rem',
-          textAlign: 'center'
-        }}>
-          Chat with Maps - Real Estate
-        </h1>
-
         <div style={{
-          background: '#fef3c7',
-          border: '2px solid #f59e0b',
-          borderRadius: '8px',
-          padding: '1.5rem',
-          marginBottom: '2rem'
+          maxWidth: '600px',
+          background: 'white',
+          borderRadius: '16px',
+          padding: '2rem',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
         }}>
-          <h2 style={{
-            fontSize: '1.25rem',
-            fontWeight: '600',
-            color: '#92400e',
-            marginBottom: '1rem'
-          }}>
-            Setup Required
-          </h2>
-          <p style={{ color: '#78350f', lineHeight: '1.6', marginBottom: '1rem' }}>
-            This application requires several API keys and additional setup to function:
+          <h1 style={{ fontSize: '2rem', color: '#1a202c', marginBottom: '1rem' }}>
+            Google Maps API Key Required
+          </h1>
+          <p style={{ color: '#4a5568', lineHeight: '1.6' }}>
+            Please add your Google Maps API key to the .env file as VITE_GOOGLE_MAPS_API_KEY
           </p>
-          <ul style={{ color: '#78350f', lineHeight: '1.8', paddingLeft: '1.5rem' }}>
-            <li><strong>Google Maps API Key</strong> with the following APIs enabled:
-              <ul style={{ paddingLeft: '1.5rem', marginTop: '0.5rem' }}>
-                <li>Maps JavaScript API</li>
-                <li>Maps 3D API (Alpha)</li>
-                <li>Places API (New)</li>
-                <li>Geocoding API</li>
-                <li>Elevation API</li>
-              </ul>
-            </li>
-            <li style={{ marginTop: '0.5rem' }}><strong>Gemini API Key</strong> for AI-powered conversations</li>
-            <li style={{ marginTop: '0.5rem' }}><strong>Complete component structure</strong> (currently missing)</li>
-          </ul>
-        </div>
-
-        <div style={{
-          background: '#e0e7ff',
-          border: '2px solid #6366f1',
-          borderRadius: '8px',
-          padding: '1.5rem',
-          marginBottom: '2rem'
-        }}>
-          <h2 style={{
-            fontSize: '1.25rem',
-            fontWeight: '600',
-            color: '#3730a3',
-            marginBottom: '1rem'
-          }}>
-            Missing Components
-          </h2>
-          <p style={{ color: '#3730a3', lineHeight: '1.6' }}>
-            The following components and files are needed for this application to work:
-          </p>
-          <ul style={{ color: '#3730a3', lineHeight: '1.8', paddingLeft: '1.5rem', marginTop: '0.5rem' }}>
-            <li>components/ControlTray</li>
-            <li>components/ErrorScreen</li>
-            <li>components/streaming-console/StreamingConsole</li>
-            <li>components/popup/PopUp</li>
-            <li>components/Sidebar</li>
-            <li>components/map-3d/Map3D</li>
-            <li>contexts/LiveAPIContext</li>
-            <li>lib/state</li>
-            <li>lib/map-controller</li>
-            <li>hooks/use-live-api</li>
-          </ul>
-        </div>
-
-        <div style={{
-          textAlign: 'center',
-          padding: '1.5rem',
-          background: '#f3f4f6',
-          borderRadius: '8px'
-        }}>
-          <h3 style={{
-            fontSize: '1.1rem',
-            fontWeight: '600',
-            color: '#374151',
-            marginBottom: '0.75rem'
-          }}>
-            Would you like me to:
-          </h3>
-          <div style={{ color: '#4b5563', lineHeight: '1.8' }}>
-            <p>1. Create a simplified demo version that doesn't require Google Maps API?</p>
-            <p>2. Help you set up the required API keys and component structure?</p>
-            <p>3. Build a different real estate application from scratch?</p>
-          </div>
         </div>
       </div>
-    </div>
+    );
+  }
+
+  return (
+    <APIProvider
+      version={'alpha'}
+      apiKey={GOOGLE_MAPS_API_KEY}
+      solutionChannel="gmp_aistudio_itineraryapplet_v1.0.0"
+    >
+      <LiveAPIProvider>
+        <AppComponent />
+      </LiveAPIProvider>
+    </APIProvider>
   );
 }
 
