@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { APIProvider } from '@vis.gl/react-google-maps';
+import { APIProvider, useMapsLibrary } from '@vis.gl/react-google-maps';
 import { LiveAPIProvider } from './contexts/LiveAPIContext';
 import { Map3D } from './components/map-3d';
 import ControlTray from './components/ControlTray';
@@ -12,15 +12,28 @@ import { lookAtWithPadding } from './lib/look-at';
 import './index.css';
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
 
 function AppComponent() {
-  const mapRef = useRef<any>(null);
+  const mapRef = useRef<google.maps.maps3d.Map3DElement | null>(null);
   const consolePanelRef = useRef<HTMLDivElement>(null);
   const controlTrayRef = useRef<HTMLDivElement>(null);
   const [mapController, setMapController] = useState<MapController | null>(null);
   const [padding, setPadding] = useState<[number, number, number, number]>([0.05, 0.05, 0.05, 0.35]);
 
+  const placesLib = useMapsLibrary('places');
+  const elevationLib = useMapsLibrary('elevation');
+  const geocodingLib = useMapsLibrary('geocoding');
+
+  const [geocoder, setGeocoder] = useState<google.maps.Geocoder | null>(null);
+
   const { markers, routes, cameraTarget } = useMapStore();
+
+  useEffect(() => {
+    if (geocodingLib && !geocoder) {
+      setGeocoder(new geocodingLib.Geocoder());
+    }
+  }, [geocodingLib, geocoder]);
 
   useEffect(() => {
     if (mapRef.current && !mapController) {
@@ -77,7 +90,8 @@ function AppComponent() {
       }));
 
       try {
-        const elevator = new google.maps.ElevationService();
+        if (!elevationLib) return;
+        const elevator = new elevationLib.ElevationService();
         const cameraProps = await lookAtWithPadding(
           locations,
           elevator,
@@ -94,7 +108,7 @@ function AppComponent() {
     mapController.clearMarkers();
     mapController.addMarkers(markers);
     flyToMarkers();
-  }, [markers, mapController, padding]);
+  }, [markers, mapController, padding, elevationLib]);
 
   useEffect(() => {
     if (!mapController || !cameraTarget) return;
@@ -106,23 +120,60 @@ function AppComponent() {
     mapController.setRoutes(routes);
   }, [routes, mapController]);
 
+  if (!GOOGLE_API_KEY) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        padding: '2rem'
+      }}>
+        <div style={{
+          maxWidth: '600px',
+          background: 'white',
+          borderRadius: '16px',
+          padding: '2rem',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+        }}>
+          <h1 style={{ fontSize: '2rem', color: '#1a202c', marginBottom: '1rem' }}>
+            Google API Key Required
+          </h1>
+          <p style={{ color: '#4a5568', lineHeight: '1.6' }}>
+            Please add your Google API key to the .env file as VITE_GOOGLE_API_KEY (for Gemini)
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="app">
-      <div ref={consolePanelRef} className="console-panel">
-        <StreamingConsole />
-      </div>
+    <LiveAPIProvider
+      apiKey={GOOGLE_API_KEY}
+      map={mapRef.current}
+      placesLib={placesLib}
+      elevationLib={elevationLib}
+      geocoder={geocoder}
+      padding={padding}
+    >
+      <div className="app">
+        <div ref={consolePanelRef} className="console-panel">
+          <StreamingConsole />
+        </div>
 
-      <div className="map-container">
-        <Map3D ref={mapRef} />
-        <GroundingWidget />
-      </div>
+        <div className="map-container">
+          <Map3D ref={mapRef} />
+          <GroundingWidget />
+        </div>
 
-      <div ref={controlTrayRef} className="control-tray-container">
-        <ControlTray />
-      </div>
+        <div ref={controlTrayRef} className="control-tray-container">
+          <ControlTray />
+        </div>
 
-      <Sidebar />
-    </div>
+        <Sidebar />
+      </div>
+    </LiveAPIProvider>
   );
 }
 
@@ -161,9 +212,7 @@ function App() {
       apiKey={GOOGLE_MAPS_API_KEY}
       solutionChannel="gmp_aistudio_itineraryapplet_v1.0.0"
     >
-      <LiveAPIProvider>
-        <AppComponent />
-      </LiveAPIProvider>
+      <AppComponent />
     </APIProvider>
   );
 }
