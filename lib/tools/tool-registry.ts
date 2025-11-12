@@ -259,6 +259,7 @@ const mapsGrounding: ToolImplementation = async (args, context) => {
  * Tool implementation for displaying a Dubai community on the 3D map.
  */
 const locateCommunity: ToolImplementation = async (args, context) => {
+  console.log('locateCommunity tool called with args:', args);
   const { communityName } = args;
 
   if (typeof communityName !== 'string') {
@@ -277,13 +278,16 @@ const locateCommunity: ToolImplementation = async (args, context) => {
   // Clear previous markers when locating a new community
   useMapStore.getState().clearMarkers();
 
-  useMapStore.getState().setCameraTarget({
+  const cameraTarget = {
     center: { ...community, altitude: 2000 },
     range: 10000,
     tilt: 30,
     heading: 0,
     roll: 0,
-  });
+  };
+
+  console.log('Setting camera target:', cameraTarget);
+  useMapStore.getState().setCameraTarget(cameraTarget);
 
   return `Located ${communityName} on the map.`;
 };
