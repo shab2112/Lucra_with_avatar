@@ -118,7 +118,9 @@ function AppComponent() {
   }, [markers, mapController, padding, elevationLib, preventAutoFrame]);
 
   useEffect(() => {
+    console.log('Camera target changed:', cameraTarget, 'MapController ready:', !!mapController);
     if (!mapController || !cameraTarget) return;
+    console.log('Flying to:', cameraTarget);
     mapController.flyTo(cameraTarget);
   }, [cameraTarget, mapController]);
 
