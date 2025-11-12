@@ -172,10 +172,10 @@ function AppComponent() {
         <div className="map-container">
           <Map3D
             ref={mapRef}
-            center={{ lat: 37.7749, lng: -122.4194, altitude: 0 }}
-            range={1000}
+            center={{ lat: 25.2048, lng: 55.2708, altitude: 0 }}
+            range={50000}
             heading={0}
-            tilt={67.5}
+            tilt={45}
             roll={0}
           />
           <GroundingWidget />
