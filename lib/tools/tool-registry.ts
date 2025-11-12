@@ -277,17 +277,14 @@ const locateCommunity: ToolImplementation = async (args, context) => {
 
   // Clear previous markers when locating a new community
   useMapStore.getState().clearMarkers();
-
-  const cameraTarget = {
+  
+  useMapStore.getState().setCameraTarget({
     center: { ...community, altitude: 2000 },
     range: 10000,
     tilt: 30,
     heading: 0,
     roll: 0,
-  };
-
-  console.log('Setting camera target:', cameraTarget);
-  useMapStore.getState().setCameraTarget(cameraTarget);
+  });
 
   return `Located ${communityName} on the map.`;
 };
