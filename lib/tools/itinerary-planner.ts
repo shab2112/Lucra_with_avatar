@@ -9,18 +9,18 @@ import { FunctionResponseScheduling } from '@google/genai';
 export const itineraryPlannerTools: FunctionCall[] = [
   {
     name: 'mapsGrounding',
-    description: `A tool that uses Google Maps data to find nearby points of interest (amenities) like schools, hospitals, malls, or restaurants.`,
+    description: `A powerful tool that uses Google Maps data to find ANY type of place or point of interest. Use this to search for schools, hospitals, malls, restaurants, parks, museums, hotels, entertainment venues, or ANY other type of place. This tool can find places ANYWHERE - use it whenever the user asks about locations, amenities, or places.`,
     parameters: {
       type: 'OBJECT',
       properties: {
         query: {
           type: 'STRING',
-          description: 'A search query, like "schools near Dubai Hills Estate" or "restaurants in Downtown Dubai". You MUST be as precise as possible.',
+          description: 'A natural language search query. Examples: "hospitals near Palm Jumeirah", "schools in Downtown Dubai", "restaurants near Dubai Marina", "parks near my location". Include the location/area in the query for best results.',
         },
         markerBehavior: {
           type: 'STRING',
           description:
-            'Controls which results get markers. "mentioned" for places in the text response, "all" for all search results, or "none" for no markers.',
+            'Controls which results get markers on the map. Use "all" to show all results (recommended), "mentioned" for only places you mention in your response, or "none" for no markers.',
           enum: ['mentioned', 'all', 'none'],
         },
       },
