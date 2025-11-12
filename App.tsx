@@ -20,6 +20,7 @@ function AppComponent() {
   const controlTrayRef = useRef<HTMLDivElement>(null);
   const [mapController, setMapController] = useState<MapController | null>(null);
   const [padding, setPadding] = useState<[number, number, number, number]>([0.05, 0.05, 0.05, 0.35]);
+  const pendingCameraTargetRef = useRef<any>(null);
 
   const placesLib = useMapsLibrary('places');
   const elevationLib = useMapsLibrary('elevation');
@@ -44,6 +45,13 @@ function AppComponent() {
         elevationLib: elevationLib,
       });
       setMapController(controller);
+
+      // Apply any pending camera target
+      if (pendingCameraTargetRef.current) {
+        console.log('Applying pending camera target:', pendingCameraTargetRef.current);
+        controller.flyTo(pendingCameraTargetRef.current);
+        pendingCameraTargetRef.current = null;
+      }
     }
   }, [mapController, maps3dLib, elevationLib]);
 
@@ -119,7 +127,15 @@ function AppComponent() {
 
   useEffect(() => {
     console.log('Camera target changed:', cameraTarget, 'MapController ready:', !!mapController);
-    if (!mapController || !cameraTarget) return;
+    if (!cameraTarget) return;
+
+    if (!mapController) {
+      // Store the camera target to apply later when map is ready
+      console.log('Map not ready yet, storing pending camera target');
+      pendingCameraTargetRef.current = cameraTarget;
+      return;
+    }
+
     console.log('Flying to:', cameraTarget);
     mapController.flyTo(cameraTarget);
   }, [cameraTarget, mapController]);
