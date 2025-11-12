@@ -24,6 +24,7 @@ function AppComponent() {
   const placesLib = useMapsLibrary('places');
   const elevationLib = useMapsLibrary('elevation');
   const geocodingLib = useMapsLibrary('geocoding');
+  const maps3dLib = useMapsLibrary('maps3d');
 
   const [geocoder, setGeocoder] = useState<google.maps.Geocoder | null>(null);
 
@@ -36,11 +37,15 @@ function AppComponent() {
   }, [geocodingLib, geocoder]);
 
   useEffect(() => {
-    if (mapRef.current && !mapController) {
-      const controller = new MapController(mapRef.current);
+    if (mapRef.current && !mapController && maps3dLib && elevationLib) {
+      const controller = new MapController({
+        map: mapRef.current,
+        maps3dLib: maps3dLib,
+        elevationLib: elevationLib,
+      });
       setMapController(controller);
     }
-  }, [mapController]);
+  }, [mapController, maps3dLib, elevationLib]);
 
   useEffect(() => {
     const calculatePadding = () => {

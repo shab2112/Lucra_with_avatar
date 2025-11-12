@@ -55,6 +55,13 @@ export class MapController {
   }
 
   /**
+   * Clears all markers from the map.
+   */
+  clearMarkers() {
+    this.clearMap();
+  }
+
+  /**
    * Adds a list of markers to the map.
    * @param markers - An array of marker data to be rendered.
    */
@@ -68,6 +75,18 @@ export class MapController {
         drawsWhenOccluded: true,
       });
       this.map.appendChild(marker);
+    }
+  }
+
+  /**
+   * Sets routes on the map.
+   * @param routes - An array of route data to be rendered.
+   */
+  setRoutes(routes: any[]) {
+    // Routes rendering implementation
+    // For now, just log to indicate the method exists
+    if (routes.length > 0) {
+      console.log('Setting routes:', routes);
     }
   }
 
