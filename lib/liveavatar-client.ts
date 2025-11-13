@@ -38,12 +38,16 @@ export class LiveAvatarClient {
   }
 
   private async createSession(): Promise<CreateSessionResponse> {
-    console.log('Creating LiveAvatar session...');
-    const response = await fetch(`${API_URL}/sessions`, {
+    console.log('Creating LiveAvatar session via edge function...');
+
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    const response = await fetch(`${supabaseUrl}/functions/v1/create-liveavatar-session`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${API_KEY}`,
+        'Authorization': `Bearer ${supabaseKey}`,
       },
       body: JSON.stringify({
         avatarId: AVATAR_ID,
