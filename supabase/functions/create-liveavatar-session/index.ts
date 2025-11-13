@@ -30,10 +30,13 @@ Deno.serve(async (req: Request) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        mode: 'TTS',
+        mode: 'FULL',
         avatar_id: avatarId,
-        voice_id: voiceId,
-        language: language,
+        avatar_persona: {
+          voice_id: voiceId,
+          context_id: contextId,
+          language: language,
+        },
       }),
     });
 

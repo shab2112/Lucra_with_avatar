@@ -119,7 +119,7 @@ export class LiveAvatarClient {
     }
 
     try {
-      this.session.message(text);
+      await this.session.speak({ text });
     } catch (error) {
       console.error('Failed to make avatar speak:', error);
       this.emitter.emit('error', error as Error);
