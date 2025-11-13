@@ -6,11 +6,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-const API_KEY = Deno.env.get("LIVEAVATAR_API_KEY") || "ff7941e7-bf38-11f0-a99e-066a7fa2e369";
+const API_KEY = Deno.env.get("LIVEAVATAR_API_KEY") || "e12d7f47-c09d-11f0-a99e-066a7fa2e369";
 const API_URL = Deno.env.get("LIVEAVATAR_API_URL") || "https://api.liveavatar.com";
 const AVATAR_ID = Deno.env.get("LIVEAVATAR_AVATAR_ID") || "0aae6046-0ab9-44fe-a08d-c5ac3f406d34";
 const VOICE_ID = Deno.env.get("LIVEAVATAR_VOICE_ID") || "b2bd6569-a537-4342-aeca-a1f15d2a2c97";
-const CONTEXT_ID = Deno.env.get("LIVEAVATAR_CONTEXT_ID") || "5237a256-1c21-4b84-843e-6ac4ab8deb23";
+const CONTEXT_ID = Deno.env.get("LIVEAVATAR_CONTEXT_ID") || "6a4a3c62-a8f3-4bd4-b7b2-08c31fd72428";
 const LANGUAGE = Deno.env.get("LIVEAVATAR_LANGUAGE") || "en";
 
 Deno.serve(async (req: Request) => {
