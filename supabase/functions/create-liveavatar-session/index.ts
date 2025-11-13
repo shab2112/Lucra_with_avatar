@@ -9,7 +9,7 @@ const corsHeaders = {
 const API_KEY = "ff7941e7-bf38-11f0-a99e-066a7fa2e369";
 const API_URL = "https://api.liveavatar.com";
 const AVATAR_ID = "0aae6046-0ab9-44fe-a08d-c5ac3f406d34";
-const VOICE_ID = "ac277b338cf64d8b9686784c43c563da";
+const VOICE_ID = "b2bd6569-a537-4342-aeca-a1f15d2a2c97";
 const CONTEXT_ID = "5237a256-1c21-4b84-843e-6ac4ab8deb23";
 const LANGUAGE = "en";
 
