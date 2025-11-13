@@ -91,11 +91,22 @@ export class LiveAvatarClient {
         }
       });
 
+      this.session.on(SessionEvent.ERROR, (error: any) => {
+        console.error('LiveAvatar SDK error:', error);
+        this.emitter.emit('error', error);
+      });
+
       await this.session.start();
 
       this.session.attach(videoElement);
     } catch (error) {
       console.error('Failed to start avatar:', error);
+      if (error instanceof Error) {
+        console.error('Error details:', {
+          message: error.message,
+          stack: error.stack,
+        });
+      }
       this.emitter.emit('error', error as Error);
       throw error;
     }
