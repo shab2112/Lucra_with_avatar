@@ -6,8 +6,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-const LIVEAVATAR_API_KEY = "ff7941e7-bf38-11f0-a99e-066a7fa2e369";
-const LIVEAVATAR_API_URL = "https://api.liveavatar.com";
+const HEYGEN_API_KEY = "ff7941e7-bf38-11f0-a99e-066a7fa2e369";
+const HEYGEN_API_URL = "https://api.heygen.com";
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -18,28 +18,20 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { avatarId, voiceId, knowledgeBaseId } = await req.json();
+    console.log('Creating HeyGen streaming token...');
 
-    console.log('Creating LiveAvatar session with:', { avatarId, voiceId, knowledgeBaseId });
-
-    const response = await fetch(`${LIVEAVATAR_API_URL}/v1/sessions/create`, {
+    const response = await fetch(`${HEYGEN_API_URL}/v1/streaming.create_token`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${LIVEAVATAR_API_KEY}`,
+        'x-api-key': HEYGEN_API_KEY,
       },
-      body: JSON.stringify({
-        avatarId,
-        voiceId,
-        knowledgeBaseId,
-      }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('LiveAvatar API error:', response.status, errorText);
+      console.error('HeyGen API error:', response.status, errorText);
       return new Response(
-        JSON.stringify({ error: `Failed to create session: ${errorText}` }),
+        JSON.stringify({ error: `Failed to create token: ${errorText}` }),
         {
           status: response.status,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -48,10 +40,10 @@ Deno.serve(async (req: Request) => {
     }
 
     const data = await response.json();
-    console.log('Session created successfully');
+    console.log('Token created successfully');
 
     return new Response(
-      JSON.stringify(data),
+      JSON.stringify({ sessionToken: data.data.token }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }

@@ -49,11 +49,6 @@ export class LiveAvatarClient {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${supabaseKey}`,
       },
-      body: JSON.stringify({
-        avatarId: AVATAR_ID,
-        voiceId: VOICE_ID,
-        knowledgeBaseId: CONTEXT_ID,
-      }),
     });
 
     if (!response.ok) {
@@ -63,9 +58,9 @@ export class LiveAvatarClient {
     }
 
     const data = await response.json();
-    console.log('Session created successfully:', data);
+    console.log('Session token received:', data);
     return {
-      sessionId: data.sessionId,
+      sessionId: '',
       sessionToken: data.sessionToken,
     };
   }
