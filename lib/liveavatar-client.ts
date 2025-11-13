@@ -11,8 +11,8 @@ export interface LiveAvatarEvents {
 }
 
 interface CreateSessionResponse {
-  session_id: string;
-  access_token: string;
+  sessionId: string;
+  sessionToken: string;
 }
 
 export class LiveAvatarClient {
@@ -39,19 +39,16 @@ export class LiveAvatarClient {
 
   private async createSession(): Promise<CreateSessionResponse> {
     console.log('Creating LiveAvatar session...');
-    const response = await fetch(`${API_URL}/v1/streaming.new`, {
+    const response = await fetch(`${API_URL}/sessions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Api-Key': API_KEY,
+        'Authorization': `Bearer ${API_KEY}`,
       },
       body: JSON.stringify({
-        avatar_id: AVATAR_ID,
-        voice: {
-          voice_id: VOICE_ID,
-        },
-        knowledge_base_id: CONTEXT_ID,
-        version: 'v2',
+        avatarId: AVATAR_ID,
+        voiceId: VOICE_ID,
+        knowledgeBaseId: CONTEXT_ID,
       }),
     });
 
@@ -62,10 +59,10 @@ export class LiveAvatarClient {
     }
 
     const data = await response.json();
-    console.log('Session created successfully:', data.data.session_id);
+    console.log('Session created successfully:', data);
     return {
-      session_id: data.data.session_id,
-      access_token: data.data.access_token,
+      sessionId: data.sessionId,
+      sessionToken: data.sessionToken,
     };
   }
 
@@ -77,13 +74,13 @@ export class LiveAvatarClient {
     try {
       this.videoElement = videoElement;
 
-      const { access_token } = await this.createSession();
+      const { sessionId, sessionToken } = await this.createSession();
 
       const sessionConfig: SessionConfig = {
         voiceChat: true,
       };
 
-      this.session = new LiveAvatarSession(access_token, sessionConfig);
+      this.session = new LiveAvatarSession(sessionToken, sessionConfig);
 
       this.session.on(SessionEvent.STATE_CHANGE, (state: SessionState) => {
         console.log('Avatar state changed:', state);
