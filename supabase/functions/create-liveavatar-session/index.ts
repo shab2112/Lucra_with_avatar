@@ -6,12 +6,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-const API_KEY = Deno.env.get("LIVEAVATAR_API_KEY");
-const API_URL = Deno.env.get("LIVEAVATAR_API_URL");
-const AVATAR_ID = Deno.env.get("LIVEAVATAR_AVATAR_ID");
-const VOICE_ID = Deno.env.get("LIVEAVATAR_VOICE_ID");
-const CONTEXT_ID = Deno.env.get("LIVEAVATAR_CONTEXT_ID");
-const LANGUAGE = Deno.env.get("LIVEAVATAR_LANGUAGE");
+const API_KEY = Deno.env.get("LIVEAVATAR_API_KEY") || "ff7941e7-bf38-11f0-a99e-066a7fa2e369";
+const API_URL = Deno.env.get("LIVEAVATAR_API_URL") || "https://api.liveavatar.com";
+const AVATAR_ID = Deno.env.get("LIVEAVATAR_AVATAR_ID") || "075abc67-2fae-4548-8ca9-b815fcbd34c7";
+const VOICE_ID = Deno.env.get("LIVEAVATAR_VOICE_ID") || "b2bd6569-a537-4342-aeca-a1f15d2a2c97";
+const CONTEXT_ID = Deno.env.get("LIVEAVATAR_CONTEXT_ID") || "5237a256-1c21-4b84-843e-6ac4ab8deb23";
+const LANGUAGE = Deno.env.get("LIVEAVATAR_LANGUAGE") || "en";
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
