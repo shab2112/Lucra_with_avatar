@@ -60,7 +60,7 @@ export class LiveAvatarClient {
     const data = await response.json();
     console.log('Session token received:', data);
     return {
-      sessionId: '',
+      sessionId: data.sessionId,
       sessionToken: data.sessionToken,
     };
   }
