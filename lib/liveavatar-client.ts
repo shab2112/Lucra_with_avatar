@@ -119,9 +119,9 @@ export class LiveAvatarClient {
     }
 
     try {
-      console.log('LiveAvatar client calling session.speak() with text:', text);
-      await this.session.speak({ text });
-      console.log('LiveAvatar session.speak() completed successfully');
+      console.log('LiveAvatar client calling session.repeat() with text:', text);
+      this.session.repeat(text);
+      console.log('LiveAvatar session.repeat() completed successfully');
     } catch (error) {
       console.error('Failed to make avatar speak:', error);
       this.emitter.emit('error', error as Error);
