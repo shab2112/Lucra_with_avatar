@@ -52,22 +52,27 @@ export function AvatarDisplay() {
   }, [connected, avatarClient, isAvatarActive]);
 
   useEffect(() => {
-    const processVideo = () => {
-      const video = hiddenVideoRef.current;
-      const canvas = canvasRef.current;
+    const video = hiddenVideoRef.current;
+    const canvas = canvasRef.current;
 
-      if (!video || !canvas || !isAvatarActive) {
-        return;
-      }
+    if (!video || !canvas || !isAvatarActive) {
+      return;
+    }
 
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
-      if (!ctx) return;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return;
 
-      const draw = () => {
-        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    let isInitialized = false;
+
+    const draw = () => {
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        if (!isInitialized && video.videoWidth > 0 && video.videoHeight > 0) {
           canvas.width = video.videoWidth;
           canvas.height = video.videoHeight;
+          isInitialized = true;
+        }
 
+        if (isInitialized) {
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
           const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -78,21 +83,19 @@ export function AvatarDisplay() {
             const g = data[i + 1];
             const b = data[i + 2];
 
-            if (g > 90 && g > r * 1.5 && g > b * 1.5) {
+            if (g > 100 && g > r * 1.4 && g > b * 1.4) {
               data[i + 3] = 0;
             }
           }
 
           ctx.putImageData(imageData, 0, 0);
         }
+      }
 
-        animationFrameRef.current = requestAnimationFrame(draw);
-      };
-
-      draw();
+      animationFrameRef.current = requestAnimationFrame(draw);
     };
 
-    processVideo();
+    draw();
 
     return () => {
       if (animationFrameRef.current) {
