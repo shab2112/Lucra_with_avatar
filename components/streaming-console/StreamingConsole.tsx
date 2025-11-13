@@ -122,7 +122,7 @@ export default function StreamingConsole() {
       const last = turns[turns.length - 1];
       if (last && last.role === 'user' && !last.isFinal) {
         updateLastTurn({
-          text: last.text + text,
+          text,
           isFinal,
         });
       } else {
@@ -137,7 +137,7 @@ export default function StreamingConsole() {
 
       if (last && last.role === 'agent' && !last.isFinal) {
         updateLastTurn({
-          text: last.text + text,
+          text,
           isFinal,
         });
       } else {
