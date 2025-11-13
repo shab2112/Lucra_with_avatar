@@ -3,9 +3,6 @@ import { useLiveAPIContext } from '../contexts/LiveAPIContext';
 
 export function AvatarDisplay() {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const hiddenVideoRef = useRef<HTMLVideoElement>(null);
-  const animationFrameRef = useRef<number>();
   const [isAvatarActive, setIsAvatarActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { avatarClient, connected } = useLiveAPIContext();
@@ -43,66 +40,13 @@ export function AvatarDisplay() {
   }, [avatarClient, connected]);
 
   useEffect(() => {
-    if (connected && avatarClient.current && hiddenVideoRef.current && !isAvatarActive) {
-      avatarClient.current.startAvatar(hiddenVideoRef.current).catch(err => {
+    if (connected && avatarClient.current && videoRef.current && !isAvatarActive) {
+      avatarClient.current.startAvatar(videoRef.current).catch(err => {
         console.error('Failed to start avatar:', err);
         setError(err.message);
       });
     }
   }, [connected, avatarClient, isAvatarActive]);
-
-  useEffect(() => {
-    const video = hiddenVideoRef.current;
-    const canvas = canvasRef.current;
-
-    if (!video || !canvas || !isAvatarActive) {
-      return;
-    }
-
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    if (!ctx) return;
-
-    let isInitialized = false;
-
-    const draw = () => {
-      if (video.readyState === video.HAVE_ENOUGH_DATA) {
-        if (!isInitialized && video.videoWidth > 0 && video.videoHeight > 0) {
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          isInitialized = true;
-        }
-
-        if (isInitialized) {
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const data = imageData.data;
-
-          for (let i = 0; i < data.length; i += 4) {
-            const r = data[i];
-            const g = data[i + 1];
-            const b = data[i + 2];
-
-            if (g > 100 && g > r * 1.4 && g > b * 1.4) {
-              data[i + 3] = 0;
-            }
-          }
-
-          ctx.putImageData(imageData, 0, 0);
-        }
-      }
-
-      animationFrameRef.current = requestAnimationFrame(draw);
-    };
-
-    draw();
-
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, [isAvatarActive]);
 
   if (!connected) {
     return null;
@@ -111,15 +55,11 @@ export function AvatarDisplay() {
   return (
     <div className="avatar-display">
       <video
-        ref={hiddenVideoRef}
-        style={{ display: 'none' }}
+        ref={videoRef}
+        className="avatar-video"
         autoPlay
         playsInline
         muted={false}
-      />
-      <canvas
-        ref={canvasRef}
-        className="avatar-video"
       />
       {error && (
         <div className="avatar-error">
