@@ -9,7 +9,7 @@ import { FunctionResponseScheduling } from '@google/genai';
 export const itineraryPlannerTools: FunctionCall[] = [
   {
     name: 'mapsGrounding',
-    description: `A tool that uses Google Maps data to find nearby points of interest (amenities) like schools, hospitals, malls, or restaurants, malls, restaurants, parks, museums, hotels, entertainment venues, or ANY other type of place. This tool can find places amd its calculate the distance between to communities, amenities, or places.`,
+    description: `A powerful tool that uses Google Maps data to find ANY type of place or point of interest. Use this to search for schools, hospitals, malls, restaurants, parks, museums, hotels, entertainment venues, or ANY other type of place. This tool can find places ANYWHERE - use it whenever the user asks about locations, amenities, or places.`,
     parameters: {
       type: 'OBJECT',
       properties: {

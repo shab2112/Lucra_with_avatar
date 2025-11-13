@@ -54,6 +54,12 @@ export class MapController {
     this.map.innerHTML = '';
   }
 
+  /**
+   * Clears all markers from the map.
+   */
+  clearMarkers() {
+    this.clearMap();
+  }
 
   /**
    * Adds a list of markers to the map.
@@ -72,6 +78,17 @@ export class MapController {
     }
   }
 
+  /**
+   * Sets routes on the map.
+   * @param routes - An array of route data to be rendered.
+   */
+  setRoutes(routes: any[]) {
+    // Routes rendering implementation
+    // For now, just log to indicate the method exists
+    if (routes.length > 0) {
+      console.log('Setting routes:', routes);
+    }
+  }
 
   /**
    * Animate the camera to a specific set of camera properties.
