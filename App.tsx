@@ -6,6 +6,7 @@ import ControlTray from './components/ControlTray';
 import StreamingConsole from './components/streaming-console/StreamingConsole';
 import Sidebar from './components/Sidebar';
 import { GroundingWidget } from './components/GroundingWidget';
+import { AvatarDisplay } from './components/AvatarDisplay';
 import { useMapStore } from './lib/state';
 import { MapController } from './lib/map-controller';
 import { lookAtWithPadding } from './lib/look-at';
@@ -202,6 +203,8 @@ function AppComponent() {
         <div ref={controlTrayRef} className="control-tray-container">
           <ControlTray />
         </div>
+
+        <AvatarDisplay />
 
         <Sidebar />
       </div>

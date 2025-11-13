@@ -33,6 +33,7 @@ import VolMeterWorket from '../lib/worklets/vol-meter';
 import { useLogStore, useMapStore, useSettings } from '@/lib/state';
 import { GenerateContentResponse, GroundingChunk } from '@google/genai';
 import { ToolContext, toolRegistry } from '@/lib/tools/tool-registry';
+import { LiveAvatarClient } from '../lib/liveavatar-client';
 
 
 export type UseLiveApiResults = {
@@ -52,6 +53,7 @@ export type UseLiveApiResults = {
  clearHeldGroundingChunks: () => void;
  heldGroundedResponse: GenerateContentResponse | undefined;
  clearHeldGroundedResponse: () => void;
+ avatarClient: MutableRefObject<LiveAvatarClient | null>;
 };
 
 
@@ -75,6 +77,7 @@ export function useLiveApi({
 
 
  const audioStreamerRef = useRef<AudioStreamer | null>(null);
+ const avatarClientRef = useRef<LiveAvatarClient | null>(null);
 
 
  const [volume, setVolume] = useState(0);
@@ -96,7 +99,15 @@ export function useLiveApi({
     setHeldGroundedResponse(undefined);
   }, []);
 
- // register audio for streaming server -> speakers
+ useEffect(() => {
+   if (!avatarClientRef.current) {
+     avatarClientRef.current = new LiveAvatarClient();
+     avatarClientRef.current.initialize().catch(err => {
+       console.error('Error initializing LiveAvatar:', err);
+     });
+   }
+ }, []);
+
  useEffect(() => {
    if (!audioStreamerRef.current) {
      audioContext({ id: 'audio-out' }).then((audioCtx: AudioContext) => {
@@ -113,20 +124,21 @@ export function useLiveApi({
    }
  }, []);
 
- // This effect sets up the main event listeners for the GenAILiveClient.
  useEffect(() => {
    const onOpen = () => {
      setConnected(true);
    };
 
    const onSetupComplete = () => {
-     // Send the initial message once the connection is confirmed open and setup is complete.
      client.sendRealtimeText('hello');
    };
 
    const onClose = (event: CloseEvent) => {
      setConnected(false);
      stopAudioStreamer();
+     if (avatarClientRef.current?.isAvatarActive()) {
+       avatarClientRef.current.stopAvatar().catch(console.error);
+     }
      let reason = "Session ended. Press 'Play' to start a new session. "+ event.reason;
      useLogStore.getState().addTurn({
          role: 'agent',
@@ -144,6 +156,9 @@ export function useLiveApi({
 
    const onInterrupted = () => {
     stopAudioStreamer();
+    if (avatarClientRef.current) {
+      avatarClientRef.current.interrupt().catch(console.error);
+    }
     const { updateLastTurn, turns } = useLogStore.getState();
     const lastTurn = turns[turns.length - 1];
     if (lastTurn && !lastTurn.isFinal) {
@@ -152,21 +167,26 @@ export function useLiveApi({
    };
 
    const onAudio = (data: ArrayBuffer) => {
-     if (audioStreamerRef.current) {
-       audioStreamerRef.current.addPCM16(new Uint8Array(data));
+   };
+
+   const onOutputTranscription = (text: string, isFinal: boolean) => {
+     if (isFinal && avatarClientRef.current?.isAvatarActive()) {
+       avatarClientRef.current.speak(text).catch(err => {
+         console.error('Error making avatar speak:', err);
+       });
      }
    };
-   
+
    const onGenerationComplete = () => {
    };
 
 
-   // Bind event listeners
    client.on('open', onOpen);
    client.on('setupcomplete', onSetupComplete);
    client.on('close', onClose);
    client.on('interrupted', onInterrupted);
    client.on('audio', onAudio);
+   client.on('outputTranscription', onOutputTranscription);
    client.on('generationcomplete', onGenerationComplete);
 
    /**
@@ -277,12 +297,12 @@ export function useLiveApi({
 
 
    return () => {
-     // Clean up event listeners
      client.off('open', onOpen);
      client.off('setupcomplete', onSetupComplete);
      client.off('close', onClose);
      client.off('interrupted', onInterrupted);
      client.off('audio', onAudio);
+     client.off('outputTranscription', onOutputTranscription);
      client.off('toolcall', onToolCall);
      client.off('generationcomplete', onGenerationComplete);
    };
@@ -319,5 +339,6 @@ export function useLiveApi({
    heldGroundedResponse,
    clearHeldGroundedResponse,
    audioStreamer: audioStreamerRef,
+   avatarClient: avatarClientRef,
  };
 }
