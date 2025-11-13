@@ -17,11 +17,8 @@ Deno.serve(async (req: Request) => {
   try {
     const apiKey = Deno.env.get('LIVEAVATAR_API_KEY');
     const avatarId = Deno.env.get('LIVEAVATAR_AVATAR_ID');
-    const voiceId = Deno.env.get('LIVEAVATAR_VOICE_ID');
-    const contextId = Deno.env.get('LIVEAVATAR_CONTEXT_ID');
-    const language = Deno.env.get('LIVEAVATAR_LANGUAGE') || 'en';
 
-    console.log('Creating LiveAvatar session with context:', contextId);
+    console.log('Creating LiveAvatar session in CUSTOM mode');
 
     const response = await fetch('https://api.liveavatar.com/v1/sessions/token', {
       method: 'POST',
@@ -30,13 +27,8 @@ Deno.serve(async (req: Request) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        mode: 'FULL',
+        mode: 'CUSTOM',
         avatar_id: avatarId,
-        avatar_persona: {
-          voice_id: voiceId,
-          context_id: contextId,
-          language: language,
-        },
       }),
     });
 
