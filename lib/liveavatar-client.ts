@@ -38,6 +38,7 @@ export class LiveAvatarClient {
   }
 
   private async createSession(): Promise<CreateSessionResponse> {
+    console.log('Creating LiveAvatar session...');
     const response = await fetch(`${API_URL}/v1/streaming.new`, {
       method: 'POST',
       headers: {
@@ -56,10 +57,12 @@ export class LiveAvatarClient {
 
     if (!response.ok) {
       const error = await response.text();
-      throw new Error(`Failed to create session: ${error}`);
+      console.error('Failed to create session:', response.status, error);
+      throw new Error(`Failed to create session (${response.status}): ${error}`);
     }
 
     const data = await response.json();
+    console.log('Session created successfully:', data.data.session_id);
     return {
       session_id: data.data.session_id,
       access_token: data.data.access_token,

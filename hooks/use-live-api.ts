@@ -78,6 +78,7 @@ export function useLiveApi({
 
  const audioStreamerRef = useRef<AudioStreamer | null>(null);
  const avatarClientRef = useRef<LiveAvatarClient | null>(null);
+ const accumulatedTextRef = useRef<string>('');
 
 
  const [volume, setVolume] = useState(0);
@@ -136,6 +137,7 @@ export function useLiveApi({
    const onClose = (event: CloseEvent) => {
      setConnected(false);
      stopAudioStreamer();
+     accumulatedTextRef.current = '';
      if (avatarClientRef.current?.isAvatarActive()) {
        avatarClientRef.current.stopAvatar().catch(console.error);
      }
@@ -156,6 +158,7 @@ export function useLiveApi({
 
    const onInterrupted = () => {
     stopAudioStreamer();
+    accumulatedTextRef.current = '';
     if (avatarClientRef.current) {
       avatarClientRef.current.interrupt().catch(console.error);
     }
@@ -170,14 +173,19 @@ export function useLiveApi({
    };
 
    const onOutputTranscription = (text: string, isFinal: boolean) => {
-     if (isFinal && avatarClientRef.current?.isAvatarActive()) {
-       avatarClientRef.current.speak(text).catch(err => {
-         console.error('Error making avatar speak:', err);
-       });
+     if (isFinal) {
+       accumulatedTextRef.current += text + ' ';
      }
    };
 
    const onGenerationComplete = () => {
+     if (accumulatedTextRef.current.trim() && avatarClientRef.current?.isAvatarActive()) {
+       const textToSpeak = accumulatedTextRef.current.trim();
+       accumulatedTextRef.current = '';
+       avatarClientRef.current.speak(textToSpeak).catch(err => {
+         console.error('Error making avatar speak:', err);
+       });
+     }
    };
 
 
