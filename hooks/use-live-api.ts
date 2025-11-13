@@ -107,6 +107,12 @@ export function useLiveApi({
        console.error('Error initializing LiveAvatar:', err);
      });
    }
+
+   return () => {
+     if (avatarClientRef.current?.isAvatarActive()) {
+       avatarClientRef.current.stopAvatar().catch(console.error);
+     }
+   };
  }, []);
 
  useEffect(() => {
@@ -138,10 +144,7 @@ export function useLiveApi({
      setConnected(false);
      stopAudioStreamer();
      accumulatedTextRef.current = '';
-     if (avatarClientRef.current?.isAvatarActive()) {
-       avatarClientRef.current.stopAvatar().catch(console.error);
-     }
-     let reason = "Session ended. Press 'Play' to start a new session. "+ event.reason;
+     let reason = "Session paused. Press 'Play' to resume. "+ event.reason;
      useLogStore.getState().addTurn({
          role: 'agent',
          text: reason,
