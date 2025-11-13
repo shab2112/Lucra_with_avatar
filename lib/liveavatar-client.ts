@@ -77,6 +77,7 @@ export class LiveAvatarClient {
 
       const sessionConfig: SessionConfig = {
         voiceChat: true,
+        apiUrl: API_URL,
       };
 
       this.session = new LiveAvatarSession(sessionToken, sessionConfig);
