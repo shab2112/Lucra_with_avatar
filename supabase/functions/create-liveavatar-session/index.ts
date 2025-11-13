@@ -6,13 +6,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-const API_KEY = Deno.env.get("LIVEAVATAR_API_KEY") || "e12d7f47-c09d-11f0-a99e-066a7fa2e369";
-const API_URL = Deno.env.get("LIVEAVATAR_API_URL") || "https://api.liveavatar.com";
-const AVATAR_ID = Deno.env.get("LIVEAVATAR_AVATAR_ID") || "0aae6046-0ab9-44fe-a08d-c5ac3f406d34";
-const VOICE_ID = Deno.env.get("LIVEAVATAR_VOICE_ID") || "b2bd6569-a537-4342-aeca-a1f15d2a2c97";
-const CONTEXT_ID = Deno.env.get("LIVEAVATAR_CONTEXT_ID") || "6a4a3c62-a8f3-4bd4-b7b2-08c31fd72428";
-const LANGUAGE = Deno.env.get("LIVEAVATAR_LANGUAGE") || "en";
-
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, {
@@ -22,40 +15,39 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    console.log('Creating LiveAvatar session token...');
+    const apiKey = Deno.env.get('LIVEAVATAR_API_KEY');
+    const avatarId = Deno.env.get('LIVEAVATAR_AVATAR_ID');
+    const voiceId = Deno.env.get('LIVEAVATAR_VOICE_ID');
+    const contextId = Deno.env.get('LIVEAVATAR_CONTEXT_ID');
+    const language = Deno.env.get('LIVEAVATAR_LANGUAGE') || 'en';
 
-    const response = await fetch(`${API_URL}/v1/sessions/token`, {
+    console.log('Creating LiveAvatar session with context:', contextId);
+
+    const response = await fetch('https://api.liveavatar.com/v1/sessions/token', {
       method: 'POST',
       headers: {
-        'X-API-KEY': API_KEY,
+        'X-API-KEY': apiKey!,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         mode: 'FULL',
-        avatar_id: AVATAR_ID,
+        avatar_id: avatarId,
         avatar_persona: {
-          voice_id: VOICE_ID,
-          context_id: CONTEXT_ID,
-          language: LANGUAGE,
+          voice_id: voiceId,
+          context_id: contextId,
+          language: language,
         },
       }),
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      const errorMessage = errorData.data?.[0]?.message ?? 'Failed to retrieve session token';
-      console.error('LiveAvatar API error:', response.status, errorMessage);
-      return new Response(
-        JSON.stringify({ error: errorMessage }),
-        {
-          status: response.status,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+      const errorText = await response.text();
+      console.error('LiveAvatar API error:', response.status, errorText);
+      throw new Error(`LiveAvatar API error: ${response.status} ${errorText}`);
     }
 
     const data = await response.json();
-    console.log('Session created successfully');
+    console.log('Session created successfully:', data.data.session_id);
 
     return new Response(
       JSON.stringify({
@@ -63,16 +55,22 @@ Deno.serve(async (req: Request) => {
         sessionId: data.data.session_id,
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+        },
       }
     );
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error creating session:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+        },
       }
     );
   }
