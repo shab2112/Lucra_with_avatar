@@ -623,10 +623,10 @@ gmp-place-details-compact {
 .transcription-container {
   flex-grow: 1;
   position: relative;
-  overflow: visible;
+  overflow: hidden;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .transcription-view {
