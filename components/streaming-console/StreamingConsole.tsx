@@ -269,15 +269,23 @@ export default function StreamingConsole() {
 
   useEffect(() => {
     if (scrollRef.current) {
-      // The widget has a 300ms transition for max-height. We need to wait
-      // for that transition to finish before we can accurately scroll to the bottom.
-      const scrollTimeout = setTimeout(() => {
-        if (scrollRef.current) {
-          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        }
-      }, 350); // A little longer than the transition duration
+      const element = scrollRef.current;
+      const isNearBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 100;
 
-      return () => clearTimeout(scrollTimeout);
+      if (isNearBottom || turns.length === 1) {
+        // The widget has a 300ms transition for max-height. We need to wait
+        // for that transition to finish before we can accurately scroll to the bottom.
+        const scrollTimeout = setTimeout(() => {
+          if (scrollRef.current) {
+            scrollRef.current.scrollTo({
+              top: scrollRef.current.scrollHeight,
+              behavior: 'smooth'
+            });
+          }
+        }, 50);
+
+        return () => clearTimeout(scrollTimeout);
+      }
     }
   }, [turns, isAwaitingFunctionResponse]);
 
