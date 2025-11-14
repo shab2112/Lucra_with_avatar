@@ -30,7 +30,7 @@ import { Map3D, Map3DCameraProps} from './components/map-3d';
 import { useMapStore } from './lib/state';
 import { MapController } from './lib/map-controller';
 
-const GEMINI_API_KEY = process.env.VITE_GOOGLE_API_KEY as string;
+const GEMINI_API_KEY = import.meta.env.VITE_GOOGLE_API_KEY as string;
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string;
 
 if (typeof GEMINI_API_KEY !== 'string' || !GEMINI_API_KEY) {
