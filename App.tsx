@@ -1,89 +1,95 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { APIProvider, useMapsLibrary } from '@vis.gl/react-google-maps';
-import { LiveAPIProvider } from './contexts/LiveAPIContext';
-import { Map3D, Map3DCameraProps } from './components/map-3d';
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+*/
+/**
+ * Copyright 2024 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+import React, {useCallback, useState, useEffect, useRef} from 'react';
+
 import ControlTray from './components/ControlTray';
 import ErrorScreen from './components/ErrorScreen';
-import PopUp from './components/popup/PopUp';
 import StreamingConsole from './components/streaming-console/StreamingConsole';
+import PopUp from './components/popup/PopUp';
 import Sidebar from './components/Sidebar';
-import { GroundingWidget } from './components/GroundingWidget';
-import { AvatarDisplay } from './components/AvatarDisplay';
+import { LiveAPIProvider } from './contexts/LiveAPIContext';
+import { APIProvider, useMapsLibrary } from '@vis.gl/react-google-maps';
+import { Map3D, Map3DCameraProps} from './components/map-3d';
 import { useMapStore } from './lib/state';
 import { MapController } from './lib/map-controller';
-import { lookAtWithPadding } from './lib/look-at';
-import './index.css';
 
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
+const GEMINI_API_KEY = process.env.VITE_GOOGLE_API_KEY as string;
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string;
+
+if (typeof GEMINI_API_KEY !== 'string' || !GEMINI_API_KEY) {
+  throw new Error('Missing GEMINI_API_KEY in .env file');
+}
+
+if (typeof GOOGLE_MAPS_API_KEY !== 'string' || !GOOGLE_MAPS_API_KEY) {
+  throw new Error('Missing VITE_GOOGLE_API_KEY in .env file');
+}
 
 const INITIAL_VIEW_PROPS = {
   center: {
-    lat: 25.12, // Centered on Dubai
+    lat: 25.12,
     lng: 55.22,
     altitude: 1000
   },
-  range: 35000, // Zoomed out to see major communities
+  range: 35000,
   heading: 0,
   tilt: 30,
   roll: 0
 };
-/**
- * The main application component. It serves as the primary view controller,
- * orchestrating the layout of UI components and reacting to global state changes
- * to update the 3D map.
- */
+
 function AppComponent() {
-  const [map, setMap] = useState<google.maps.maps3d.Map3DElement | null>(null); 
-  // const mapRef = useRef<google.maps.maps3d.Map3DElement | null>(null);
-  const consolePanelRef = useRef<HTMLDivElement>(null);
-  const controlTrayRef = useRef<HTMLDivElement>(null);
-  const mapController = useRef<MapController | null>(null);
-  const [padding, setPadding] = useState<[number, number, number, number]>([0.05, 0.05, 0.05, 0.35]);
-  // const pendingCameraTargetRef = useRef<any>(null);
-  const [viewProps, setViewProps] = useState(INITIAL_VIEW_PROPS);
+  const [map, setMap] = useState<google.maps.maps3d.Map3DElement | null>(null);
   const placesLib = useMapsLibrary('places');
-  const elevationLib = useMapsLibrary('elevation');
   const geocodingLib = useMapsLibrary('geocoding');
-  const maps3dLib = useMapsLibrary('maps3d');
-
   const [geocoder, setGeocoder] = useState<google.maps.Geocoder | null>(null);
+  const [viewProps, setViewProps] = useState(INITIAL_VIEW_PROPS);
+  const { markers, cameraTarget, setCameraTarget, preventAutoFrame } = useMapStore();
+  const mapController = useRef<MapController | null>(null);
 
-  const { markers, cameraTarget, setCameraTarget, preventAutoFrame  } = useMapStore();
+  const maps3dLib = useMapsLibrary('maps3d');
+  const elevationLib = useMapsLibrary('elevation');
+
+  const [showPopUp, setShowPopUp] = useState(true);
+
+  const consolePanelRef = useRef<HTMLDivElement>(null);
+  const controlTrayRef = useRef<HTMLElement>(null);
+  const [padding, setPadding] = useState<[number, number, number, number]>([0.05, 0.05, 0.05, 0.05]);
 
   useEffect(() => {
-    if (geocodingLib && !geocoder) {
+    if (geocodingLib) {
       setGeocoder(new geocodingLib.Geocoder());
     }
-  }, [geocodingLib, geocoder]);
+  }, [geocodingLib]);
 
   useEffect(() => {
     if (map && maps3dLib && elevationLib) {
-      const mapController.current = new MapController({
+      mapController.current = new MapController({
         map,
         maps3dLib,
         elevationLib,
       });
     }
-    // Invalidate the controller if its dependencies change.
     return () => {
       mapController.current = null;
     };
   }, [map, maps3dLib, elevationLib]);
-  
-      // Apply any pending camera target
-  //     if (pendingCameraTargetRef.current) {
-  //       console.log('Applying pending camera target:', pendingCameraTargetRef.current);
-  //       controller.flyTo(pendingCameraTargetRef.current);
-  //       pendingCameraTargetRef.current = null;
-  //     }
-  //   }
-  // }, [mapController, maps3dLib, elevationLib]);
-  // Effect: Calculate responsive padding.
-  // This effect observes the size of the console and control tray to calculate
-  // padding values. These values represent how much of the viewport is
-  // covered by UI, ensuring that when the map frames content, nothing is hidden.
-  // See `lib/look-at.ts` for how this padding is used.
+
   useEffect(() => {
     const calculatePadding = () => {
       const consoleEl = consolePanelRef.current;
@@ -94,43 +100,38 @@ function AppComponent() {
       if (!consoleEl || !trayEl) return;
 
       const isMobile = window.matchMedia('(max-width: 768px)').matches;
-
+      
       const top = 0.05;
       const right = 0.05;
       let bottom = 0.05;
       let left = 0.05;
 
       if (!isMobile) {
-        left = Math.max(left, (consoleEl.offsetWidth / vw) + 0.02);
-        // bottom = Math.max(bottom, (trayEl.offsetHeight / vh) + 0.02);
+          left = Math.max(left, (consoleEl.offsetWidth / vw) + 0.02);
       }
-
+      
       setPadding([top, right, bottom, left]);
     };
-    // Use ResizeObserver for more reliable updates on the elements themselves.
+
     const observer = new ResizeObserver(calculatePadding);
     if (consolePanelRef.current) observer.observe(consolePanelRef.current);
     if (controlTrayRef.current) observer.observe(controlTrayRef.current);
 
-    // Also listen to window resize
     window.addEventListener('resize', calculatePadding);
 
-    // Initial calculation after a short delay to ensure layout is stable
     const timeoutId = setTimeout(calculatePadding, 100);
 
-    // calculatePadding();
-
     return () => {
-      observer.disconnect();
-      window.removeEventListener('resize', calculatePadding);
-      clearTimeout(timeoutId);
+        window.removeEventListener('resize', calculatePadding);
+        observer.disconnect();
+        clearTimeout(timeoutId);
     };
   }, []);
 
   const handleClosePopUp = () => {
     setShowPopUp(false);
   };
-
+  
   useEffect(() => {
     if (map) {
       const banner = document.querySelector(
@@ -142,14 +143,9 @@ function AppComponent() {
     }
   }, [map]);
 
-  // Effect: Reactively render markers and routes on the map.
-  // This is the core of the component's "reactive" nature. It listens for
-  // changes to the `markers` array in the global Zustand store.
-  // Whenever a tool updates this state, this effect triggers, commanding the
-  // MapController to clear the map, add the new entities, and then
-  // intelligently frame them all in the camera's view, respecting UI padding.
   useEffect(() => {
     if (!mapController.current) return;
+
     const controller = mapController.current;
     controller.clearMap();
 
@@ -157,26 +153,18 @@ function AppComponent() {
       controller.addMarkers(markers);
     }
     
-    // Combine all points from markers for framing
     const markerPositions = markers.map(m => m.position);
     const allEntities = [...markerPositions].map(p => ({ position: p }));
+
     if (allEntities.length > 0 && !preventAutoFrame) {
       controller.frameEntities(allEntities, padding);
     }
-  }, [markers, padding, preventAutoFrame]); // Re-run when markers or padding change
+  }, [markers, padding, preventAutoFrame]);
 
-
-  // Effect: Reactively handle direct camera movement requests.
-  // This effect listens for changes to `cameraTarget`. Tools can set this state
-  // to request a direct camera flight to a specific location or view. Once the
-  // flight is initiated, the target is cleared to prevent re-triggering.
   useEffect(() => {
     if (cameraTarget && mapController.current) {
       mapController.current.flyTo(cameraTarget);
-      // Reset the target so it doesn't re-trigger on re-renders
       setCameraTarget(null);
-      // After a direct camera flight, reset the auto-frame prevention flag
-      // to ensure subsequent marker updates behave as expected.
       useMapStore.getState().setPreventAutoFrame(false);
     }
   }, [cameraTarget, setCameraTarget]);
@@ -187,7 +175,7 @@ function AppComponent() {
 
   return (
     <LiveAPIProvider 
-      apiKey={GOOGLE_MAPS_API_KEY} 
+      apiKey={GEMINI_API_KEY} 
       map={map} 
       placesLib={placesLib}
       elevationLib={elevationLib}
@@ -213,21 +201,16 @@ function AppComponent() {
     </LiveAPIProvider>
   );
 }
-      
-/**
- * Main application component that provides a streaming interface for Live API.
- * Manages video streaming state and provides controls for webcam/screen capture.
- */
+
 function App() {
   return (
     <div className="App">
-    <APIProvider
-                version={'alpha'}
-                apiKey={'AIzaSyCYTvt7YMcKjSNTnBa42djlndCeDvZHkr0'}
-                solutionChannel={"gmp_aistudio_itineraryapplet_v1.0.0"}>  
-      <AppComponent />
-    </APIProvider>
-
+      <APIProvider
+        version={'alpha'}
+        apiKey={GOOGLE_MAPS_API_KEY}
+        solutionChannel={"gmp_aistudio_itineraryapplet_v1.0.0"}>  
+        <AppComponent />
+      </APIProvider>
     </div>
   );
 }
