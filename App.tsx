@@ -186,9 +186,9 @@ function AppComponent() {
         <ErrorScreen />
         <Sidebar />
          {showPopUp && <PopUp onClose={handleClosePopUp} />}
+        <AvatarDisplay />
         <div className="streaming-console">
           <div className="console-panel" ref={consolePanelRef}>
-            <AvatarDisplay />
             <StreamingConsole />
             <ControlTray trayRef={controlTrayRef} />
           </div>
